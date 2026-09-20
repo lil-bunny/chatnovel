@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>যা বলা হয়নি — ChatNovel</title>
+  <link rel="icon" type="image/png" href="/static/deb.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -101,7 +102,7 @@
     .end.show { display: grid; gap: .7rem; }
     .end h2 { font-family: "Noto Serif Bengali", serif; margin: 0; font-size: 1.15rem; }
     .end .line { color: var(--gold); }
-    .end button, .cover button:not(.ghost) {
+    .end button, .cover button:not(.ghost):not(.chip) {
       background: var(--gold); color: #f3e6c8; border: 0; border-radius: 4px;
       padding: .7rem 1.1rem; font: inherit; font-weight: 700; cursor: pointer;
     }
@@ -140,12 +141,18 @@
     .cover p { color: var(--mute); line-height: 1.55; }
     .hint { font-size: .8rem; color: var(--mute); }
     .picks { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin: .35rem 0 .6rem; pointer-events: auto; position: relative; z-index: 32; }
-    .chip {
-      border: 1px solid var(--line); background: #efe0b8; color: var(--text);
-      border-radius: 999px; padding: .4rem .85rem; font: inherit; cursor: pointer;
-      pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    .cover .chip {
+      border: 2px solid var(--line); background: #f7eccf; color: var(--text);
+      border-radius: 999px; padding: .4rem .85rem; font: inherit; font-weight: 500;
+      cursor: pointer; pointer-events: auto; touch-action: manipulation;
     }
-    .chip.on { background: var(--gold); color: #f3e6c8; }
+    .cover .chip.on {
+      background: #6b2a1c;
+      color: #fff6dc;
+      border-color: #6b2a1c;
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px #fff6dc55;
+    }
     .slate {
       align-self: center; max-width: 92%; text-align: center;
       border: 1px solid #8a3a28; background: #3a2416; color: #f3e6c8;
@@ -635,9 +642,23 @@ function paintPicks(id, items, key) {
     b.type = "button";
     b.className = "chip" + (pick[key] === item.id ? " on" : "");
     b.dataset[key] = item.id;
+    b.setAttribute("aria-pressed", pick[key] === item.id ? "true" : "false");
     b.textContent = item.label;
+    b.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      pick[key] = item.id;
+      highlightRow(box, key);
+    });
     box.appendChild(b);
   }
+}
+function highlightRow(box, key) {
+  box.querySelectorAll(".chip").forEach((c) => {
+    const on = c.dataset[key] === pick[key];
+    c.classList.toggle("on", on);
+    c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
 }
 $("cover").addEventListener("click", (ev) => {
   const chip = ev.target.closest(".chip");
@@ -647,7 +668,9 @@ $("cover").addEventListener("click", (ev) => {
   if (chip.dataset.trope) pick.trope = chip.dataset.trope;
   if (chip.dataset.era) pick.era = chip.dataset.era;
   if (chip.dataset.heat) pick.heat = chip.dataset.heat;
-  renderPicks();
+  highlightRow($("tropes"), "trope");
+  highlightRow($("eras"), "era");
+  highlightRow($("heats"), "heat");
 });
 renderPicks();
 async function buildPlot() {

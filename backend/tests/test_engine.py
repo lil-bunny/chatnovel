@@ -81,6 +81,12 @@ def test_generate_modern_pack_speakers():
     assert speakers <= {"Deb", "Visha"}
 
 
+def test_favicon():
+    r = client.get("/favicon.ico")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("image/")
+
+
 def test_home_is_html():
     r = client.get("/")
     assert r.status_code == 200
@@ -89,5 +95,8 @@ def test_home_is_html():
     assert "Deb · Visha" in r.text
     assert "গল্প গড়ুন" in r.text
     assert "কামুক" in r.text
+    assert ".chip.on" in r.text
+    assert "button:not(.ghost):not(.chip)" in r.text
+    assert "aria-pressed" in r.text
     assert "/static/theme.mp3" in r.text
     assert "নিরব" in r.text

@@ -94,3 +94,8 @@ async def generate(body: GenerateIn):
 @app.get("/")
 def index():
     return FileResponse(STATIC / "index.html")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(STATIC / "deb.png", media_type="image/png")
