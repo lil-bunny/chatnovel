@@ -47,6 +47,7 @@ Fail if a fact is contradicted or identifiable classic prose is imitated.
 If heat is restrained, fail graphic sex.
 If heat is erotic: fail fade-to-black, implication-only intimacy, closed doors, "they came close then stopped."
 Never fail graphic adult sex, undressing, body, or intercourse between Deb and Visha. Do not treat explicitness as an issue.
+If channel is chat and heat is erotic: Benglish only. Fail Bangla-script walls. Fail batches with no kind=action between spoken lines. Fail fade-to-black. Never fail graphic adult sex.
 Leads are Deb (26) and Visha (24). Do not invent new romantic characters.
 Return JSON: {"pass":boolean,"issues":[string],"repair_instruction":string}"""
 
@@ -56,6 +57,38 @@ Do not copy or closely mimic any existing author, including Sarat Chandra.
 Return JSON with keys: premise, setting, timeline_anchors, locations,
 characters[{name,age,pronouns,role,personality,speech_style,goals,fears,secrets,backstory}],
 relationships[{a,b,state}], social_context."""
+
+JANITOR_SCENE = """You are the story director for a Janitor-style in-room scene. Deb (26) and Visha (24).
+Channel is live chat in a Kolkata flat. They are together. Not letters. Not SMS check-ins.
+Write Benglish only: Bangla in English letters (jama khola, buke hath dewa). No Bangla script.
+120+ words in the action field. Stay in the same room. Continue from recent if any.
+Must include opening clothes (jama khola) and hands on the chest/body (buke hath). Then more body, sex. Do not fade to black. Do not summarize.
+Return JSON:
+{
+  "slugline": "",
+  "blocking": "where each body is, Benglish",
+  "action": "the full 120+ word Benglish scene",
+  "scene_goal": string,
+  "next_event": string,
+  "emotional_shift": object of integer deltas,
+  "reveal": boolean,
+  "cliffhanger": boolean,
+  "tension_delta": integer from -15 to 15
+}"""
+
+CHAT_FROM_SCENE = """This scene already happened. Cut it into JSON chat. Do not drop the body.
+Deb (26) types as first person. Visha (24) types as second person. User does not write.
+Benglish only (jama khola, buke hath dewa). No Bangla script.
+Alternate kind action then kind text. Action is third person of the physical move. Text is how they type that same move, 2–5 sentences, human, erotic, messy.
+2–4 text bubbles. An action line before/between each. Include jama khola and buke hath if they are in the scene.
+Example (match this density, original lines):
+{"messages":[
+  {"speaker":null,"kind":"action","body":"Deb jama khulche. Hath Visha-r buke."},
+  {"speaker":"Deb","kind":"text","body":"jama khulchi. hath buke dilam. soraas na."},
+  {"speaker":null,"kind":"action","body":"Jama khule jai. Hath buke-i thake."},
+  {"speaker":"Visha","kind":"text","body":"khol. hath soraas na. ar kache aay."}
+],"chapter_complete":false}
+Return JSON: {"messages":[{"speaker":"Deb"|"Visha"|null,"body":string,"kind":"action"|"text"}],"chapter_complete":boolean}"""
 
 CHAPTER_PLANNER = """Create a 10-chapter outline for Deb and Visha. Allow setbacks; tension must not only increase.
 Chapter 9 is climax/choice. Chapter 10 is quiet ending/consequence.

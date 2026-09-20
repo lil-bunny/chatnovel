@@ -344,11 +344,14 @@ function addMarker(text) {
 function addSlate(msg) {
   const d = document.createElement("div");
   d.className = "slate";
-  const k = document.createElement("strong");
-  k.textContent = msg.slugline || (msg.body || "").split("\n")[0] || "দৃশ্য";
-  d.appendChild(k);
+  const slug = (msg.slugline || "").trim();
   const rest = [msg.blocking, msg.action].filter(Boolean).join("\n")
-    || (msg.body || "").split("\n").slice(1).join("\n");
+    || (slug ? (msg.body || "").split("\n").slice(1).join("\n") : (msg.body || ""));
+  if (slug) {
+    const k = document.createElement("strong");
+    k.textContent = slug;
+    d.appendChild(k);
+  }
   if (rest) {
     const s = document.createElement("span");
     s.textContent = rest;
@@ -409,7 +412,9 @@ function keyDelay(ch, speaker) {
 async function thinkThenType(text, speaker) {
   statusEl.textContent = `${speaker} লিখছে…`;
   const n = glyphs(text).length;
-  await sleep(380 + Math.random() * 720 + Math.min(n * 8, 650));
+  let wait = 380 + Math.random() * 720 + Math.min(n * 8, 650);
+  if (/jama|buke|hath|khol/i.test(text || "")) wait *= 1.35;
+  await sleep(wait);
 }
 
 async function typeIntoComposer(text) {

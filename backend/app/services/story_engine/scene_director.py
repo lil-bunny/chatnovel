@@ -14,7 +14,13 @@ async def direct(provider: LLMProvider, context: dict) -> dict:
         f"era_rules: {context.get('era_rules')}\n"
         "Place Deb and Visha. Select the next scene beat. Do not write their lines."
     )
-    beat = await provider.complete_json(prompts.SCENE_DIRECTOR, user)
+    rules = context.get("era_rules") or {}
+    sys = (
+        prompts.JANITOR_SCENE
+        if rules.get("channel") == "chat" and rules.get("heat") == "erotic"
+        else prompts.SCENE_DIRECTOR
+    )
+    beat = await provider.complete_json(sys, user)
     return beat or heuristic_beat(context)
 
 

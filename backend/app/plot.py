@@ -32,7 +32,8 @@ HEAT_SPEC = {
     "erotic": (
         "Full erotica between Deb (26) and Visha (24). Must write: hands on cloth, "
         "opening dress/sari/blouse/shirt (era-true), skin, mouths, exploring the body, intercourse. "
-        "Action beat is 4–8 Bengali sentences. Do not fade to black. Do not imply and cut away."
+        "Action beat is 4–8 Bengali sentences. Do not fade to black. Do not imply and cut away. "
+        "If channel is chat: Benglish (jama khola, buke hath), interleaved action plus first-person chat. Do not drop the body."
     ),
 }
 
@@ -89,12 +90,18 @@ def presets() -> dict:
 def era_rules(era: str, heat: str = "restrained") -> dict:
     spec = ERAS_SPEC.get(era) or ERAS_SPEC["calcutta_1850"]
     h = heat if heat in HEAT_SPEC else "restrained"
-    return {
+    out = {
         "era": era if era in ERAS_SPEC else "calcutta_1850",
         "heat": h,
         "heat_direction": HEAT_SPEC[h],
         **spec,
     }
+    if h == "erotic" and spec.get("channel") == "chat":
+        out["delivery"] = (
+            "Benglish in-chat RP: interleaved body action plus first-person chat. "
+            "jama khola, buke hath. User does not write."
+        )
+    return out
 
 
 def _lock_leads(bible: dict, spec: dict) -> dict:

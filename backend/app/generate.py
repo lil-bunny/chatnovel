@@ -16,6 +16,10 @@ LEADS = [FIRST, SECOND]
 SKIP_KINDS = ("scene_marker", "action")
 
 
+def _chat_rp(rules: dict) -> bool:
+    return str(rules.get("channel") or "") == "chat" and str(rules.get("heat") or "") == "erotic"
+
+
 def _canned(chapter: dict, already: int) -> dict[str, Any]:
     raw = chapter.get("messages") or []
     raw = raw[already : already + 8]
@@ -89,7 +93,7 @@ def _clean(raw: list[dict] | None) -> list[dict]:
         if speaker not in LEADS:
             continue
         messages.append({"speaker": speaker, "body": body, "kind": kind})
-    return messages[:8]
+    return messages[:10]
 
 
 def _action_card(beat: dict) -> dict | None:
@@ -130,6 +134,23 @@ def _dialogue_user(bible, chapter, recent, already, beat, subtext, rules, repair
     return blob
 
 
+def _chat_from_scene_user(bible, chapter, recent, already, beat, rules, repair: str) -> str:
+    scene = (beat.get("action") or beat.get("blocking") or "").strip() or str(beat)
+    blob = (
+        f"Story bible: {bible}\n"
+        f"Chapter {chapter.get('n')} — {chapter.get('title')}\n"
+        f"era_rules: {rules}\n"
+        f"This scene already happened:\n{scene}\n"
+        f"Recent: {recent[-16:]}\n"
+        f"Messages already in this chapter: {already}\n"
+        "Cut it into JSON chat. Do not drop the body. "
+        "Alternate action then text. Benglish. 2–4 text bubbles."
+    )
+    if repair:
+        blob += f"\nREPAIR and rewrite: {repair}"
+    return blob
+
+
 async def _directed(
     chapter: dict,
     recent: list[dict],
@@ -156,14 +177,23 @@ async def _directed(
         "threads": [t["name"] for t in THREADS],
         "era_rules": rules,
     }
-    user_extra = (
-        f"era_rules: {rules}\n"
-        f"Heat: {rules.get('heat')}\n"
-        f"Key scenes (prefer these locations): {chapter.get('key_scenes')}\n"
-        "Place Deb and Visha. Do not write their lines.\n"
-        "If heat is erotic, action must be a 4-8 sentence sex sequence: "
-        "hands, opening cloth, skin, bodies, intercourse. Do not fade to black."
-    )
+    rp = _chat_rp(rules)
+    if rp:
+        user_extra = (
+            f"era_rules: {rules}\n"
+            f"Heat: {rules.get('heat')}\n"
+            f"Key scenes (prefer these locations): {chapter.get('key_scenes')}\n"
+            "Place Deb and Visha. Stay in the room. Write the full Benglish scene in action."
+        )
+    else:
+        user_extra = (
+            f"era_rules: {rules}\n"
+            f"Heat: {rules.get('heat')}\n"
+            f"Key scenes (prefer these locations): {chapter.get('key_scenes')}\n"
+            "Place Deb and Visha. Do not write their lines.\n"
+            "If heat is erotic, action must be a 4-8 sentence sex sequence: "
+            "hands, opening cloth, skin, bodies, intercourse. Do not fade to black."
+        )
     beat = await scene_director.direct(provider, {**context, "recent": context["recent"] + [user_extra]})
     state = emotion_engine.apply_deltas(
         state, beat.get("emotional_shift") or {}, major_reveal=bool(beat.get("reveal"))
@@ -176,10 +206,14 @@ async def _directed(
     repair = ""
     messages: list[dict] = []
     complete = False
+    sys_chat = prompts.CHAT_FROM_SCENE if rp else prompts.DIALOGUE
     for _ in range(2):
-        data = await provider.complete_json(
-            prompts.DIALOGUE, _dialogue_user(bible, chapter, recent, already, beat, subtext, rules, repair)
+        user_chat = (
+            _chat_from_scene_user(bible, chapter, recent, already, beat, rules, repair)
+            if rp
+            else _dialogue_user(bible, chapter, recent, already, beat, subtext, rules, repair)
         )
+        data = await provider.complete_json(sys_chat, user_chat)
         messages = _clean(data.get("messages") if isinstance(data, dict) else None)
         complete = bool((data or {}).get("chapter_complete"))
         try:
@@ -200,13 +234,14 @@ async def _directed(
         if not repair:
             break
 
-    card = _action_card(beat)
-    if card and already == 0:
-        messages = [card, *[m for m in messages if m.get("kind") != "action"]]
-    elif card:
-        last = (recent[-1] if recent else {}) or {}
-        if last.get("kind") != "action":
+    if not rp:
+        card = _action_card(beat)
+        if card and already == 0:
             messages = [card, *[m for m in messages if m.get("kind") != "action"]]
+        elif card:
+            last = (recent[-1] if recent else {}) or {}
+            if last.get("kind") != "action":
+                messages = [card, *[m for m in messages if m.get("kind") != "action"]]
 
     complete = complete or bool(beat.get("cliffhanger")) or already + len(messages) >= 14
     return {

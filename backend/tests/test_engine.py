@@ -52,6 +52,8 @@ def test_compose_locks_deb_visha():
     assert pack["era_rules"]["heat"] == "erotic"
     assert "intercourse" in pack["era_rules"]["heat_direction"]
     assert "opening dress" in pack["era_rules"]["heat_direction"]
+    assert "Benglish" in pack["era_rules"]["delivery"]
+    assert "jama" in pack["era_rules"]["delivery"]
 
 
 def test_canned_chapter_one_is_period():
@@ -118,6 +120,10 @@ def test_erotic_prompts_require_body_and_never_fail_sex():
     assert "fail fade-to-black" in prompts.CRITIC
     assert "Do not treat explicitness as an issue" in prompts.CRITIC
     assert "private-room" in prompts.CHAPTER_PLANNER
+    assert "Benglish" in prompts.JANITOR_SCENE
+    assert "jama khola" in prompts.JANITOR_SCENE
+    assert "do not drop the body" in prompts.CHAT_FROM_SCENE.lower()
+    assert "kind=action" in prompts.CRITIC
 
 
 def test_erotic_generate_opens_cloth():
@@ -135,4 +141,27 @@ def test_erotic_post_check_allows_graphic():
     from app.services.story_engine.safety import post_check
 
     post_check(["explicit sex between Deb and Visha"], heat="erotic")
+
+
+def test_modern_erotic_benglish_interleave():
+    import asyncio
+
+    pack = asyncio.run(compose("slow_burn", "modern", "erotic", provider=MockProvider()))
+    data = asyncio.run(next_batch(0, [], 0, pack=pack, provider=MockProvider()))
+    kinds = [m.get("kind") for m in data["messages"]]
+    assert kinds.count("action") >= 2
+    assert kinds.count("text") >= 2
+    assert kinds[0] == "action"
+    blob = " ".join(m.get("body") or "" for m in data["messages"]).lower()
+    assert "jama" in blob
+    assert "buke" in blob
+    assert "দৃশ্য" not in blob
+    speakers = {m.get("speaker") for m in data["messages"] if m.get("kind") == "text"}
+    assert speakers <= {"Deb", "Visha"}
+
+
+def test_home_action_slate_skips_empty_slug():
+    r = client.get("/")
+    assert "const slug = (msg.slugline" in r.text
+    assert "/jama|buke|hath|khol/" in r.text
 

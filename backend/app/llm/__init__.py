@@ -38,6 +38,25 @@ class MockProvider:
 
     async def complete_json(self, system: str, user: str, cheap: bool = False) -> dict[str, Any]:
         if "story director" in system.lower() or "scene director" in system.lower():
+            if "janitor" in system.lower() or "benglish" in system.lower():
+                return self.canned.get(
+                    "director",
+                    {
+                        "scene_goal": "Flat-room intimacy. Jama khola, buke hath.",
+                        "next_event": "They stay on the bed.",
+                        "slugline": "",
+                        "blocking": "Deb-r hath Visha-r jama-r kache. Visha bed-e.",
+                        "action": (
+                            "Deb jama khulche. Hath Visha-r buke. Jama khule jai. "
+                            "Ora kache ashe, kapor khole, buke hath dewa, then sex on the bed. "
+                            "No fade. They do not stop."
+                        ),
+                        "emotional_shift": {"longing": 6},
+                        "reveal": False,
+                        "cliffhanger": False,
+                        "tension_delta": 8,
+                    },
+                )
             if "erotic" in user.lower():
                 return self.canned.get(
                     "director",
@@ -96,6 +115,16 @@ class MockProvider:
             }
         if "chapter planner" in system.lower() or "10-chapter outline" in system.lower():
             return self.canned.get("planner", {"chapters": []})
+        if "do not drop the body" in system.lower() or "cut it into json chat" in system.lower():
+            return {
+                "messages": [
+                    {"speaker": None, "kind": "action", "body": "Deb jama khulche. Hath Visha-r buke."},
+                    {"speaker": "Deb", "kind": "text", "body": "jama khulchi. hath buke dilam. soraas na."},
+                    {"speaker": None, "kind": "action", "body": "Jama khule jai. Hath buke-i thake."},
+                    {"speaker": "Visha", "kind": "text", "body": "khol. hath soraas na. ar kache aay."},
+                ],
+                "chapter_complete": False,
+            }
         if "dialogue" in system.lower() or "write original bengali for fictional" in system.lower():
             return {
                 "messages": [
