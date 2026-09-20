@@ -127,6 +127,10 @@
       background: #d9c08a; color: var(--mute); font-size: 1.1rem;
     }
     .send.hot { background: var(--gold); color: #f3e6c8; }
+    .phone.live #draft { cursor: text; outline: none; }
+    .phone.live #draft:empty::before { content: "short… jama khol"; }
+    .phone.live #pause-btn, .phone.live #end { display: none !important; }
+    .live-setup { margin: .6rem 0; }
     .cover {
       position: absolute; inset: 0; background:
         radial-gradient(500px 280px at 50% 20%, #fff6dc 0%, transparent 70%),
@@ -179,6 +183,17 @@
         <p id="cover-blurb">১৮৫০, কলকাতা। Deb আর Visha-এর গোপন চিঠি।</p>
         <p id="plot-status" class="hint"></p>
         <p id="resume-hint" class="hint"></p>
+        <p><button type="button" id="live-btn">দুজনে লিখুন</button></p>
+        <div id="live-setup" class="live-setup" hidden>
+          <p class="hint">Room <strong id="live-code"></strong></p>
+          <p class="hint" id="live-link"></p>
+          <p class="hint">Ke tumi?</p>
+          <div class="picks" id="live-roles">
+            <button type="button" class="chip" data-live-role="Deb">Ami Deb</button>
+            <button type="button" class="chip" data-live-role="Visha">Ami Visha</button>
+          </div>
+          <p id="live-err" class="hint"></p>
+        </div>
         <p><button type="button" id="build-btn">গল্প গড়ুন</button></p>
         <p><button type="button" id="start-btn">চিঠি খুলুন</button></p>
         <p><button type="button" class="ghost" id="reset-btn">শুরু থেকে</button></p>
@@ -588,8 +603,101 @@ muteBtn.onclick = () => {
   applyMute();
   if (!isMuted()) theme.play().catch(() => {});
 };
-thread.onclick = () => { skipTick = true; };
-sendBtn.onclick = () => { skipTick = true; };
+thread.onclick = () => { if (!live) skipTick = true; };
+sendBtn.onclick = () => { if (live) sendLive(); else skipTick = true; };
+
+let live = null;
+let liveTimer = 0;
+function liveUrl(id) {
+  return `${location.origin}/?live=${id}`;
+}
+async function openLive(id) {
+  live = { id, role: "", after: 0 };
+  $("live-setup").hidden = false;
+  $("live-code").textContent = id;
+  $("live-link").textContent = liveUrl(id);
+  $("live-err").textContent = "Share the link. Pick Deb or Visha. Type short, AI expands.";
+}
+$("live-btn").onclick = async () => {
+  const r = await fetch("/v1/live", { method: "POST" });
+  const data = await r.json();
+  history.replaceState({}, "", `?live=${data.id}`);
+  openLive(data.id);
+};
+$("live-roles").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-live-role]");
+  if (!b || !live) return;
+  const role = b.dataset.liveRole;
+  const r = await fetch(`/v1/live/${live.id}/join`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role }),
+  });
+  if (!r.ok) {
+    $("live-err").textContent = "Seat taken. Pick the other one.";
+    return;
+  }
+  live.role = role;
+  startLive();
+});
+function startLive() {
+  document.querySelector(".phone").classList.add("live");
+  $("cover").classList.add("hidden");
+  $("sub").textContent = `live ${live.id} · ${live.role}`;
+  draft.contentEditable = "true";
+  sendBtn.classList.add("hot");
+  thread.innerHTML = "";
+  startTheme();
+  liveTick();
+  liveTimer = setInterval(liveTick, 900);
+}
+async function liveTick() {
+  if (!live) return;
+  const r = await fetch(`/v1/live/${live.id}?after=${live.after}`);
+  if (!r.ok) return;
+  const data = await r.json();
+  for (const m of data.messages || []) {
+    live.after = m.n;
+    if (m.kind === "action") addSlate({ body: m.body });
+    else addBubble(m, m.body, false);
+  }
+  if ((data.messages || []).length) scrollBottom();
+}
+async function sendLive() {
+  if (!live?.role) return;
+  const text = (draft.textContent || "").trim();
+  if (!text) return;
+  draft.textContent = "";
+  statusEl.textContent = "AI likhche…";
+  sendBtn.disabled = true;
+  try {
+    const r = await fetch(`/v1/live/${live.id}/say`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: live.role, text }),
+    });
+    const data = await r.json();
+    for (const m of data.messages || []) {
+      if (m.n <= live.after) continue;
+      live.after = m.n;
+      if (m.kind === "action") addSlate({ body: m.body });
+      else addBubble(m, m.body, false);
+    }
+    scrollBottom();
+  } finally {
+    sendBtn.disabled = false;
+    statusEl.textContent = "";
+  }
+}
+draft.addEventListener("keydown", (ev) => {
+  if (!live) return;
+  if (ev.key === "Enter" && !ev.shiftKey) {
+    ev.preventDefault();
+    sendLive();
+  }
+});
+const liveQ = new URLSearchParams(location.search).get("live");
+if (liveQ) openLive(liveQ.toUpperCase());
 
 fetch("/v1/story")
   .then((r) => r.json())

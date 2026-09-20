@@ -37,6 +37,12 @@ class MockProvider:
         self.canned = canned or {}
 
     async def complete_json(self, system: str, user: str, cheap: bool = False) -> dict[str, Any]:
+        if "janitor-style narrator" in system.lower() or "two-player live" in system.lower():
+            who = "Deb" if "Speaker: Deb" in user else "Visha"
+            return {
+                "action": f"{who} jama khulche. Hath buke dewa. Deep, they do not stop.",
+                "body": "jama khulchi. hath buke dilam. soraas na.",
+            }
         if "story director" in system.lower() or "scene director" in system.lower():
             if "janitor" in system.lower() or "benglish" in system.lower():
                 return self.canned.get(

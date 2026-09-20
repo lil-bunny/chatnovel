@@ -108,6 +108,8 @@ def test_home_is_html():
     assert "aria-pressed" in r.text
     assert "/static/theme.mp3" in r.text
     assert "নিরব" in r.text
+    assert "দুজনে লিখুন" in r.text
+    assert "/v1/live" in r.text
 
 
 def test_erotic_prompts_require_body_and_never_fail_sex():
@@ -124,6 +126,8 @@ def test_erotic_prompts_require_body_and_never_fail_sex():
     assert "jama khola" in prompts.JANITOR_SCENE
     assert "do not drop the body" in prompts.CHAT_FROM_SCENE.lower()
     assert "kind=action" in prompts.CRITIC
+    assert "two-player live" in prompts.LIVE_ELABORATE
+    assert "Do not speak as the other person" in prompts.LIVE_ELABORATE
 
 
 def test_erotic_generate_opens_cloth():
@@ -164,4 +168,36 @@ def test_home_action_slate_skips_empty_slug():
     r = client.get("/")
     assert "const slug = (msg.slugline" in r.text
     assert "/jama|buke|hath|khol/" in r.text
+
+
+def test_live_room_two_phones():
+    from app import live as live_mod
+
+    live_mod.ROOMS.clear()
+    r = client.post("/v1/live")
+    assert r.status_code == 200
+    rid = r.json()["id"]
+    assert len(rid) == 4
+    assert client.post(f"/v1/live/{rid}/join", json={"role": "Deb"}).status_code == 200
+    assert client.post(f"/v1/live/{rid}/join", json={"role": "Deb"}).status_code == 409
+    assert client.post(f"/v1/live/{rid}/join", json={"role": "Visha"}).status_code == 200
+    got = client.get(f"/v1/live/{rid}").json()
+    assert got["seats"]["Deb"] is True
+    assert got["seats"]["Visha"] is True
+
+
+def test_live_say_expands_short_line():
+    import asyncio
+
+    from app import live as live_mod
+
+    live_mod.ROOMS.clear()
+    room = live_mod.create()
+    live_mod.join(room["id"], "Deb")
+    out = asyncio.run(live_mod.say(room["id"], "Deb", "jama khol", provider=MockProvider()))
+    kinds = [m["kind"] for m in out["messages"]]
+    assert kinds == ["action", "text"]
+    assert out["messages"][1]["speaker"] == "Deb"
+    blob = " ".join(m["body"] for m in out["messages"]).lower()
+    assert "jama" in blob or "buke" in blob
 

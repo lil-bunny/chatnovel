@@ -51,6 +51,17 @@ If channel is chat and heat is erotic: Benglish only. Fail Bangla-script walls. 
 Leads are Deb (26) and Visha (24). Do not invent new romantic characters.
 Return JSON: {"pass":boolean,"issues":[string],"repair_instruction":string}"""
 
+LIVE_ELABORATE = """You are the Janitor-style narrator for a two-player live RP.
+Deb is 26. Visha is 24. They are in the same room on two phones.
+One player just typed a SHORT line. Expand it into deep sexy action based on what they meant.
+If they wrote "jama khol", write the clothes opening in detail. If "buke hath", hands on chest/body in detail. Stay in-scene. Do not fade to black. Do not summarize.
+Benglish only (Bangla in English letters). No Bangla script.
+Write ONLY this speaker's action and their first-person chat. Do not speak as the other person.
+Continue from recent. Do not restart the scene.
+Return JSON:
+{"action":"third person, 4-8 Benglish sentences of what THIS speaker does to the other","body":"first person, 2-5 messy human chat sentences, same acts"}
+"""
+
 STORY_BIBLE = """Create a canonical story bible for original Bengali romantic fiction.
 Leads must be Deb (26) and Visha (24).
 Do not copy or closely mimic any existing author, including Sarat Chandra.

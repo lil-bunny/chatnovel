@@ -9,6 +9,7 @@ from app.config import settings
 from app.generate import next_batch
 from app.plot import compose, presets
 from app.seed_story import BIBLE, CHAPTERS
+from app import live
 
 STATIC = Path(__file__).resolve().parent / "static"
 
@@ -30,6 +31,15 @@ class PlotIn(BaseModel):
     trope: str = "slow_burn"
     era: str = "calcutta_1850"
     heat: str = "restrained"
+
+
+class LiveJoinIn(BaseModel):
+    role: str
+
+
+class LiveSayIn(BaseModel):
+    role: str
+    text: str
 
 
 @app.get("/health")
@@ -89,6 +99,39 @@ async def generate(body: GenerateIn):
     n = len(pack.get("chapters") or CHAPTERS)
     idx = max(0, min(body.chapter, n - 1))
     return await next_batch(idx, body.recent, body.already, body.tension, pack or None)
+
+
+@app.post("/v1/live")
+def live_create():
+    return live.create()
+
+
+@app.get("/v1/live/{rid}")
+def live_get(rid: str, after: int = 0):
+    try:
+        return live.snapshot(rid.upper(), after)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="no room") from None
+
+
+@app.post("/v1/live/{rid}/join")
+def live_join(rid: str, body: LiveJoinIn):
+    try:
+        return live.join(rid.upper(), body.role)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="no room") from None
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+
+
+@app.post("/v1/live/{rid}/say")
+async def live_say(rid: str, body: LiveSayIn):
+    try:
+        return await live.say(rid.upper(), body.role, body.text)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="no room") from None
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.get("/")
