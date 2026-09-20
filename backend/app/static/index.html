@@ -327,19 +327,19 @@ function restoreSeen() {
 }
 
 function keyDelay(ch, speaker) {
-  const pace = speaker === FIRST ? 1.05 : 0.92;
-  if (/[।!?…]/.test(ch)) return (420 + Math.random() * 780) * pace;
-  if (/[,.—\-]/.test(ch)) return (220 + Math.random() * 320) * pace;
-  if (ch === " " || ch === "\n") return (90 + Math.random() * 160) * pace;
-  let ms = 170 + Math.random() * 190;
-  if (Math.random() < 0.09) ms += 450 + Math.random() * 850;
-  if (Math.random() < 0.2) ms *= 0.45;
+  const pace = speaker === FIRST ? 0.72 : 0.64;
+  if (/[।!?…]/.test(ch)) return (260 + Math.random() * 420) * pace;
+  if (/[,.—\-]/.test(ch)) return (130 + Math.random() * 180) * pace;
+  if (ch === " " || ch === "\n") return (50 + Math.random() * 90) * pace;
+  let ms = 105 + Math.random() * 115;
+  if (Math.random() < 0.06) ms += 260 + Math.random() * 420;
+  if (Math.random() < 0.22) ms *= 0.45;
   return ms * pace;
 }
 async function thinkThenType(text, speaker) {
   statusEl.textContent = `${speaker} লিখছে…`;
   const n = glyphs(text).length;
-  await sleep(700 + Math.random() * 1400 + Math.min(n * 14, 1100));
+  await sleep(380 + Math.random() * 720 + Math.min(n * 8, 650));
 }
 
 async function typeIntoComposer(text) {
@@ -354,7 +354,7 @@ async function typeIntoComposer(text) {
     await sleep(keyDelay(parts[i], FIRST));
   }
   sendBtn.classList.add("hot");
-  await sleep(380 + Math.random() * 420);
+  await sleep(220 + Math.random() * 240);
   skipTick = false;
 }
 
@@ -380,13 +380,13 @@ async function playOne(msg) {
     statusEl.textContent = "";
     addMarker(msg.body);
     scrollBottom();
-    await sleep(700 + Math.random() * 500);
+    await sleep(400 + Math.random() * 280);
     return;
   }
   if (msg.kind === "deleted") {
     const who = isFirst(msg) ? FIRST : SECOND;
     statusEl.textContent = `${who} একটি পাতা পোড়াচ্ছে…`;
-    await sleep(900 + Math.random() * 700);
+    await sleep(520 + Math.random() * 380);
     addBubble(msg, msg.body, false);
   } else if (isFirst(msg)) {
     await typeIntoComposer(msg.body);
@@ -398,7 +398,7 @@ async function playOne(msg) {
   sendBtn.classList.remove("hot");
   statusEl.textContent = "";
   scrollBottom();
-  await sleep(650 + Math.random() * 900 + Math.min((msg.body || "").length * 22, 1400));
+  await sleep(380 + Math.random() * 480 + Math.min((msg.body || "").length * 12, 800));
 }
 
 async function fetchMore() {
