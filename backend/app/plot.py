@@ -33,7 +33,7 @@ HEAT_SPEC = {
         "Full erotica between Deb (26) and Visha (24). Must write: hands on cloth, "
         "opening dress/sari/blouse/shirt (era-true), skin, mouths, exploring the body, intercourse. "
         "Action beat is 4–8 Bengali sentences. Do not fade to black. Do not imply and cut away. "
-        "If channel is chat: Benglish (jama khola, buke hath), interleaved action plus first-person chat. Do not drop the body."
+        "If channel is chat: English, interleaved action plus first-person chat. Undressing, hands on the body. Do not drop the body."
     ),
 }
 
@@ -98,8 +98,8 @@ def era_rules(era: str, heat: str = "restrained") -> dict:
     }
     if h == "erotic" and spec.get("channel") == "chat":
         out["delivery"] = (
-            "Benglish in-chat RP: interleaved body action plus first-person chat. "
-            "jama khola, buke hath. User does not write."
+            "English in-chat RP: interleaved body action plus first-person chat. "
+            "Undressing, hands on the body. User does not write."
         )
     return out
 

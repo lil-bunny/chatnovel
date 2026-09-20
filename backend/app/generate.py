@@ -144,7 +144,7 @@ def _chat_from_scene_user(bible, chapter, recent, already, beat, rules, repair: 
         f"Recent: {recent[-16:]}\n"
         f"Messages already in this chapter: {already}\n"
         "Cut it into JSON chat. Do not drop the body. "
-        "Alternate action then text. Benglish. 2–4 text bubbles."
+        "Alternate action then text. English. 2–4 text bubbles."
     )
     if repair:
         blob += f"\nREPAIR and rewrite: {repair}"
@@ -183,7 +183,7 @@ async def _directed(
             f"era_rules: {rules}\n"
             f"Heat: {rules.get('heat')}\n"
             f"Key scenes (prefer these locations): {chapter.get('key_scenes')}\n"
-            "Place Deb and Visha. Stay in the room. Write the full Benglish scene in action."
+            "Place Deb and Visha. Stay in the room. Write the full English scene in action."
         )
     else:
         user_extra = (

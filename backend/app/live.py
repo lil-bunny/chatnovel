@@ -91,7 +91,7 @@ async def _expand(provider: LLMProvider, role: str, text: str, recent: list[dict
         f"Speaker: {role} (age {26 if role == 'Deb' else 24}). Other is {other}.\n"
         f"They typed: {text}\n"
         f"Recent: {recent[-8:]}\n"
-        "Expand this one line into deep action + their chat. Benglish. Do not write the other person."
+        "Expand this one line into deep action + their chat. English. Do not write the other person."
     )
     data = await provider.complete_json(prompts.LIVE_ELABORATE, user)
     action = str((data or {}).get("action") or "").strip()

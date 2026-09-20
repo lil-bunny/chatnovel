@@ -52,8 +52,8 @@ def test_compose_locks_deb_visha():
     assert pack["era_rules"]["heat"] == "erotic"
     assert "intercourse" in pack["era_rules"]["heat_direction"]
     assert "opening dress" in pack["era_rules"]["heat_direction"]
-    assert "Benglish" in pack["era_rules"]["delivery"]
-    assert "jama" in pack["era_rules"]["delivery"]
+    assert "English" in pack["era_rules"]["delivery"]
+    assert "Undressing" in pack["era_rules"]["delivery"]
 
 
 def test_canned_chapter_one_is_period():
@@ -108,7 +108,7 @@ def test_home_is_html():
     assert "aria-pressed" in r.text
     assert "/static/theme.mp3" in r.text
     assert "নিরব" in r.text
-    assert "দুজনে লিখুন" in r.text
+    assert "Play together" in r.text
     assert "/v1/live" in r.text
 
 
@@ -122,11 +122,11 @@ def test_erotic_prompts_require_body_and_never_fail_sex():
     assert "fail fade-to-black" in prompts.CRITIC
     assert "Do not treat explicitness as an issue" in prompts.CRITIC
     assert "private-room" in prompts.CHAPTER_PLANNER
-    assert "Benglish" in prompts.JANITOR_SCENE
-    assert "jama khola" in prompts.JANITOR_SCENE
+    assert "Write in English only." in prompts.JANITOR_SCENE
+    assert "opening clothes" in prompts.JANITOR_SCENE
     assert "do not drop the body" in prompts.CHAT_FROM_SCENE.lower()
     assert "kind=action" in prompts.CRITIC
-    assert "two-player live" in prompts.LIVE_ELABORATE
+    assert "English only." in prompts.LIVE_ELABORATE
     assert "Do not speak as the other person" in prompts.LIVE_ELABORATE
 
 
@@ -157,8 +157,8 @@ def test_modern_erotic_benglish_interleave():
     assert kinds.count("text") >= 2
     assert kinds[0] == "action"
     blob = " ".join(m.get("body") or "" for m in data["messages"]).lower()
-    assert "jama" in blob
-    assert "buke" in blob
+    assert "shirt" in blob
+    assert "chest" in blob
     assert "দৃশ্য" not in blob
     speakers = {m.get("speaker") for m in data["messages"] if m.get("kind") == "text"}
     assert speakers <= {"Deb", "Visha"}
@@ -167,7 +167,7 @@ def test_modern_erotic_benglish_interleave():
 def test_home_action_slate_skips_empty_slug():
     r = client.get("/")
     assert "const slug = (msg.slugline" in r.text
-    assert "/jama|buke|hath|khol/" in r.text
+    assert "/shirt|chest|undress|open|hand/" in r.text
 
 
 def test_live_room_two_phones():
@@ -194,10 +194,10 @@ def test_live_say_expands_short_line():
     live_mod.ROOMS.clear()
     room = live_mod.create()
     live_mod.join(room["id"], "Deb")
-    out = asyncio.run(live_mod.say(room["id"], "Deb", "jama khol", provider=MockProvider()))
+    out = asyncio.run(live_mod.say(room["id"], "Deb", "open my shirt", provider=MockProvider()))
     kinds = [m["kind"] for m in out["messages"]]
     assert kinds == ["action", "text"]
     assert out["messages"][1]["speaker"] == "Deb"
     blob = " ".join(m["body"] for m in out["messages"]).lower()
-    assert "jama" in blob or "buke" in blob
+    assert "shirt" in blob or "chest" in blob
 

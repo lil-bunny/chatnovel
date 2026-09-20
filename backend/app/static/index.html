@@ -128,7 +128,7 @@
     }
     .send.hot { background: var(--gold); color: #f3e6c8; }
     .phone.live #draft { cursor: text; outline: none; }
-    .phone.live #draft:empty::before { content: "short… jama khol"; }
+    .phone.live #draft:empty::before { content: "type short… open my shirt"; }
     .phone.live #pause-btn, .phone.live #end { display: none !important; }
     .live-setup { margin: .6rem 0; }
     .cover {
@@ -183,14 +183,14 @@
         <p id="cover-blurb">১৮৫০, কলকাতা। Deb আর Visha-এর গোপন চিঠি।</p>
         <p id="plot-status" class="hint"></p>
         <p id="resume-hint" class="hint"></p>
-        <p><button type="button" id="live-btn">দুজনে লিখুন</button></p>
+        <p><button type="button" id="live-btn">Play together</button></p>
         <div id="live-setup" class="live-setup" hidden>
           <p class="hint">Room <strong id="live-code"></strong></p>
           <p class="hint" id="live-link"></p>
-          <p class="hint">Ke tumi?</p>
+          <p class="hint">Who are you?</p>
           <div class="picks" id="live-roles">
-            <button type="button" class="chip" data-live-role="Deb">Ami Deb</button>
-            <button type="button" class="chip" data-live-role="Visha">Ami Visha</button>
+            <button type="button" class="chip" data-live-role="Deb">I'm Deb</button>
+            <button type="button" class="chip" data-live-role="Visha">I'm Visha</button>
           </div>
           <p id="live-err" class="hint"></p>
         </div>
@@ -428,7 +428,7 @@ async function thinkThenType(text, speaker) {
   statusEl.textContent = `${speaker} লিখছে…`;
   const n = glyphs(text).length;
   let wait = 380 + Math.random() * 720 + Math.min(n * 8, 650);
-  if (/jama|buke|hath|khol/i.test(text || "")) wait *= 1.35;
+  if (/shirt|chest|undress|open|hand/i.test(text || "")) wait *= 1.35;
   await sleep(wait);
 }
 
@@ -616,7 +616,7 @@ async function openLive(id) {
   $("live-setup").hidden = false;
   $("live-code").textContent = id;
   $("live-link").textContent = liveUrl(id);
-  $("live-err").textContent = "Share the link. Pick Deb or Visha. Type short, AI expands.";
+  $("live-err").textContent = "Share the link. Pick Deb or Visha. Type short; the AI expands it in English.";
 }
 $("live-btn").onclick = async () => {
   const r = await fetch("/v1/live", { method: "POST" });
@@ -668,7 +668,7 @@ async function sendLive() {
   const text = (draft.textContent || "").trim();
   if (!text) return;
   draft.textContent = "";
-  statusEl.textContent = "AI likhche…";
+  statusEl.textContent = "Writing…";
   sendBtn.disabled = true;
   try {
     const r = await fetch(`/v1/live/${live.id}/say`, {

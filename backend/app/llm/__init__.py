@@ -40,21 +40,21 @@ class MockProvider:
         if "janitor-style narrator" in system.lower() or "two-player live" in system.lower():
             who = "Deb" if "Speaker: Deb" in user else "Visha"
             return {
-                "action": f"{who} jama khulche. Hath buke dewa. Deep, they do not stop.",
-                "body": "jama khulchi. hath buke dilam. soraas na.",
+                "action": f"{who} opens the shirt. Hand on the chest. They do not stop.",
+                "body": "I'm opening it. Hand on your chest. Don't pull away.",
             }
         if "story director" in system.lower() or "scene director" in system.lower():
             if "janitor" in system.lower() or "benglish" in system.lower():
                 return self.canned.get(
                     "director",
                     {
-                        "scene_goal": "Flat-room intimacy. Jama khola, buke hath.",
+                        "scene_goal": "Flat-room intimacy. Clothes open. Hands on the body.",
                         "next_event": "They stay on the bed.",
                         "slugline": "",
-                        "blocking": "Deb-r hath Visha-r jama-r kache. Visha bed-e.",
+                        "blocking": "Deb's hand at Visha's shirt. Visha on the bed.",
                         "action": (
-                            "Deb jama khulche. Hath Visha-r buke. Jama khule jai. "
-                            "Ora kache ashe, kapor khole, buke hath dewa, then sex on the bed. "
+                            "Deb opens her shirt. His hand finds her chest. "
+                            "They come closer, clothes off, then sex on the bed. "
                             "No fade. They do not stop."
                         ),
                         "emotional_shift": {"longing": 6},
@@ -124,10 +124,10 @@ class MockProvider:
         if "do not drop the body" in system.lower() or "cut it into json chat" in system.lower():
             return {
                 "messages": [
-                    {"speaker": None, "kind": "action", "body": "Deb jama khulche. Hath Visha-r buke."},
-                    {"speaker": "Deb", "kind": "text", "body": "jama khulchi. hath buke dilam. soraas na."},
-                    {"speaker": None, "kind": "action", "body": "Jama khule jai. Hath buke-i thake."},
-                    {"speaker": "Visha", "kind": "text", "body": "khol. hath soraas na. ar kache aay."},
+                    {"speaker": None, "kind": "action", "body": "Deb opens her shirt. His hand finds her chest."},
+                    {"speaker": "Deb", "kind": "text", "body": "I'm opening it. Hand on your chest. Don't pull away."},
+                    {"speaker": None, "kind": "action", "body": "The shirt falls. His hand stays."},
+                    {"speaker": "Visha", "kind": "text", "body": "Don't stop. Closer."},
                 ],
                 "chapter_complete": False,
             }

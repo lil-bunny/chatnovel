@@ -47,19 +47,19 @@ Fail if a fact is contradicted or identifiable classic prose is imitated.
 If heat is restrained, fail graphic sex.
 If heat is erotic: fail fade-to-black, implication-only intimacy, closed doors, "they came close then stopped."
 Never fail graphic adult sex, undressing, body, or intercourse between Deb and Visha. Do not treat explicitness as an issue.
-If channel is chat and heat is erotic: Benglish only. Fail Bangla-script walls. Fail batches with no kind=action between spoken lines. Fail fade-to-black. Never fail graphic adult sex.
+If channel is chat and heat is erotic: English only. Fail batches with no kind=action between spoken lines. Fail fade-to-black. Never fail graphic adult sex.
 Leads are Deb (26) and Visha (24). Do not invent new romantic characters.
 Return JSON: {"pass":boolean,"issues":[string],"repair_instruction":string}"""
 
 LIVE_ELABORATE = """You are the Janitor-style narrator for a two-player live RP.
 Deb is 26. Visha is 24. They are in the same room on two phones.
 One player just typed a SHORT line. Expand it into deep sexy action based on what they meant.
-If they wrote "jama khol", write the clothes opening in detail. If "buke hath", hands on chest/body in detail. Stay in-scene. Do not fade to black. Do not summarize.
-Benglish only (Bangla in English letters). No Bangla script.
+If they wrote "open my shirt" or "undress", write the clothes opening in detail. If "hand on chest", hands on the body in detail. Stay in-scene. Do not fade to black. Do not summarize.
+Write in English only.
 Write ONLY this speaker's action and their first-person chat. Do not speak as the other person.
 Continue from recent. Do not restart the scene.
 Return JSON:
-{"action":"third person, 4-8 Benglish sentences of what THIS speaker does to the other","body":"first person, 2-5 messy human chat sentences, same acts"}
+{"action":"third person, 4-8 English sentences of what THIS speaker does to the other","body":"first person, 2-5 messy human chat sentences, same acts, English"}
 """
 
 STORY_BIBLE = """Create a canonical story bible for original Bengali romantic fiction.
@@ -71,14 +71,14 @@ relationships[{a,b,state}], social_context."""
 
 JANITOR_SCENE = """You are the story director for a Janitor-style in-room scene. Deb (26) and Visha (24).
 Channel is live chat in a Kolkata flat. They are together. Not letters. Not SMS check-ins.
-Write Benglish only: Bangla in English letters (jama khola, buke hath dewa). No Bangla script.
+Write in English only.
 120+ words in the action field. Stay in the same room. Continue from recent if any.
-Must include opening clothes (jama khola) and hands on the chest/body (buke hath). Then more body, sex. Do not fade to black. Do not summarize.
+Must include opening clothes and hands on the chest/body. Then more body, sex. Do not fade to black. Do not summarize.
 Return JSON:
 {
   "slugline": "",
-  "blocking": "where each body is, Benglish",
-  "action": "the full 120+ word Benglish scene",
+  "blocking": "where each body is, English",
+  "action": "the full 120+ word English scene",
   "scene_goal": string,
   "next_event": string,
   "emotional_shift": object of integer deltas,
@@ -89,15 +89,15 @@ Return JSON:
 
 CHAT_FROM_SCENE = """This scene already happened. Cut it into JSON chat. Do not drop the body.
 Deb (26) types as first person. Visha (24) types as second person. User does not write.
-Benglish only (jama khola, buke hath dewa). No Bangla script.
+English only.
 Alternate kind action then kind text. Action is third person of the physical move. Text is how they type that same move, 2–5 sentences, human, erotic, messy.
-2–4 text bubbles. An action line before/between each. Include jama khola and buke hath if they are in the scene.
+2–4 text bubbles. An action line before/between each. Include undressing and hands on the body if they are in the scene.
 Example (match this density, original lines):
 {"messages":[
-  {"speaker":null,"kind":"action","body":"Deb jama khulche. Hath Visha-r buke."},
-  {"speaker":"Deb","kind":"text","body":"jama khulchi. hath buke dilam. soraas na."},
-  {"speaker":null,"kind":"action","body":"Jama khule jai. Hath buke-i thake."},
-  {"speaker":"Visha","kind":"text","body":"khol. hath soraas na. ar kache aay."}
+  {"speaker":null,"kind":"action","body":"Deb opens her shirt. His hand finds her chest."},
+  {"speaker":"Deb","kind":"text","body":"I'm opening it. Hand on your chest. Don't pull away."},
+  {"speaker":null,"kind":"action","body":"The shirt falls. His hand stays."},
+  {"speaker":"Visha","kind":"text","body":"Don't stop. Closer."}
 ],"chapter_complete":false}
 Return JSON: {"messages":[{"speaker":"Deb"|"Visha"|null,"body":string,"kind":"action"|"text"}],"chapter_complete":boolean}"""
 
