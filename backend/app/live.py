@@ -25,7 +25,7 @@ def create() -> dict:
         for _ in range(12):
             rid = _code()
             if rid not in ROOMS:
-                ROOMS[rid] = {"id": rid, "seats": {"Deb": False, "Visha": False}, "messages": [], "n": 0}
+                ROOMS[rid] = {"id": rid, "seats": {"Deb": False, "Visha": False}, "messages": [], "n": 0, "hints": []}
                 return snapshot(rid)
         raise RuntimeError("could not mint room")
 
@@ -40,6 +40,7 @@ def snapshot(rid: str, after: int = 0) -> dict:
         "seats": dict(room["seats"]),
         "messages": msgs,
         "after": room["n"],
+        "hints": list(room.get("hints") or []),
     }
 
 
@@ -75,29 +76,39 @@ async def say(rid: str, role: str, text: str, provider: LLMProvider | None = Non
             raise KeyError("no room")
         recent = room["messages"][-12:]
     p = provider or get_provider()
-    action, body = await _expand(p, role, text, recent)
+    action, body, hints = await _expand(p, role, text, recent)
     with _lock:
         room = ROOMS.get(rid)
         if not room:
             raise KeyError("no room")
         _push(room, "action", None, action, text)
         _push(room, "text", role, body, text)
+        room["hints"] = hints
         return snapshot(rid, after=max(0, room["n"] - 2))
 
 
-async def _expand(provider: LLMProvider, role: str, text: str, recent: list[dict]) -> tuple[str, str]:
+async def _expand(provider: LLMProvider, role: str, text: str, recent: list[dict]) -> tuple[str, str, list[str]]:
     other = "Visha" if role == "Deb" else "Deb"
+    scene = []
+    for m in recent[-8:]:
+        who = m.get("speaker") or "action"
+        scene.append(f"{who}: {m.get('body') or ''}")
     user = (
         f"Speaker: {role} (age {26 if role == 'Deb' else 24}). Other is {other}.\n"
-        f"They typed: {text}\n"
-        f"Recent: {recent[-8:]}\n"
-        "Expand this one line into deep action + their chat. English. Do not write the other person."
+        f"They typed (DO THIS ACT): {text}\n"
+        f"SCENE SO FAR:\n" + ("\n".join(scene) if scene else "(nothing yet — they are together in a private room)") + "\n"
+        "Do the act they asked for on the current bodies. Name body parts. English. "
+        "Do not write the other person. Include 3 next suggestions."
     )
     data = await provider.complete_json(prompts.LIVE_ELABORATE, user)
     action = str((data or {}).get("action") or "").strip()
     body = str((data or {}).get("body") or "").strip()
+    raw_next = (data or {}).get("next") or []
+    hints = [str(x).strip() for x in raw_next if str(x).strip()][:4]
     if not action:
         action = f"{role} does what they said: {text}"
     if not body:
         body = text
-    return action, body
+    if not hints:
+        hints = ["kiss their neck", "hand on their chest", "pull them closer"]
+    return action, body, hints

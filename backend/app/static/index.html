@@ -130,7 +130,15 @@
     .phone.live #draft { cursor: text; outline: none; }
     .phone.live #draft:empty::before { content: "type short… open my shirt"; }
     .phone.live #pause-btn, .phone.live #end { display: none !important; }
-    .live-setup { margin: .6rem 0; }
+    .phone.live #hints { display: flex; }
+    #hints {
+      display: none; flex-wrap: wrap; gap: .3rem; justify-content: flex-start;
+    }
+    #hints .chip {
+      border: 1px solid var(--line); background: #f7eccf; color: var(--text);
+      border-radius: 999px; padding: .25rem .65rem; font: inherit; font-size: .75rem;
+      cursor: pointer;
+    }
     .cover {
       position: absolute; inset: 0; background:
         radial-gradient(500px 280px at 50% 20%, #fff6dc 0%, transparent 70%),
@@ -230,6 +238,7 @@
         <div id="draft"></div>
         <button class="send" type="button" id="send" aria-label="send">➤</button>
       </div>
+      <div class="picks" id="hints"></div>
     </footer>
     <audio id="theme" src="/static/theme.mp3" loop preload="auto"></audio>
   </div>
@@ -662,6 +671,7 @@ async function liveTick() {
     else addBubble(m, m.body, false);
   }
   if ((data.messages || []).length) scrollBottom();
+  if (data.hints) showHints(data.hints);
 }
 async function sendLive() {
   if (!live?.role) return;
@@ -684,9 +694,22 @@ async function sendLive() {
       else addBubble(m, m.body, false);
     }
     scrollBottom();
+    if (data.hints) showHints(data.hints);
   } finally {
     sendBtn.disabled = false;
     statusEl.textContent = "";
+  }
+}
+function showHints(list) {
+  const box = $("hints");
+  box.innerHTML = "";
+  for (const line of list || []) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = line;
+    b.onclick = () => { draft.textContent = line; draft.focus(); };
+    box.appendChild(b);
   }
 }
 draft.addEventListener("keydown", (ev) => {

@@ -126,7 +126,10 @@ def test_erotic_prompts_require_body_and_never_fail_sex():
     assert "opening clothes" in prompts.JANITOR_SCENE
     assert "do not drop the body" in prompts.CHAT_FROM_SCENE.lower()
     assert "kind=action" in prompts.CRITIC
-    assert "English only." in prompts.LIVE_ELABORATE
+    assert "Name body parts" in prompts.LIVE_ELABORATE
+    assert "Do the act they asked for" in prompts.LIVE_ELABORATE
+    assert "SCENE SO FAR" in prompts.LIVE_ELABORATE or "current scene" in prompts.LIVE_ELABORATE.lower()
+    assert '"next"' in prompts.LIVE_ELABORATE
     assert "Do not speak as the other person" in prompts.LIVE_ELABORATE
 
 
@@ -200,4 +203,24 @@ def test_live_say_expands_short_line():
     assert out["messages"][1]["speaker"] == "Deb"
     blob = " ".join(m["body"] for m in out["messages"]).lower()
     assert "shirt" in blob or "chest" in blob
+    assert out.get("hints")
+    assert any("neck" in (m["body"] or "").lower() or "breast" in (m["body"] or "").lower() or "chest" in (m["body"] or "").lower() for m in out["messages"])
+
+
+def test_live_say_fingers_from_current_scene():
+    import asyncio
+
+    from app import live as live_mod
+
+    live_mod.ROOMS.clear()
+    room = live_mod.create()
+    rid = room["id"]
+    live_mod.join(rid, "Deb")
+    asyncio.run(live_mod.say(rid, "Deb", "open my shirt", provider=MockProvider()))
+    out = asyncio.run(live_mod.say(rid, "Deb", "i wanna finger pussy", provider=MockProvider()))
+    blob = " ".join(m["body"] for m in out["messages"]).lower()
+    assert "finger" in blob
+    assert "pussy" in blob
+    full = live_mod.snapshot(rid)
+    assert len(full["messages"]) >= 4
 

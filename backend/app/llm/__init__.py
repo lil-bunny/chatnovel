@@ -39,9 +39,29 @@ class MockProvider:
     async def complete_json(self, system: str, user: str, cheap: bool = False) -> dict[str, Any]:
         if "janitor-style narrator" in system.lower() or "two-player live" in system.lower():
             who = "Deb" if "Speaker: Deb" in user else "Visha"
+            act = "finger" if "finger" in user.lower() else "open"
+            if act == "finger":
+                return {
+                    "action": (
+                        f"{who} slides a hand between the thighs, fingers the pussy, "
+                        "wet, inside, from where the last beat left their bodies."
+                    ),
+                    "body": (
+                        "I want to finger you. My fingers are on your pussy, then inside. "
+                        "You're wet. I don't stop."
+                    ),
+                    "next": ["deeper", "thumb on clit", "kiss me while I do it"],
+                }
             return {
-                "action": f"{who} opens the shirt. Hand on the chest. They do not stop.",
-                "body": "I'm opening it. Hand on your chest. Don't pull away.",
+                "action": (
+                    f"{who} opens the shirt. Mouth on the neck, hand on the breasts, "
+                    "thumb at a nipple, then down the waist to the thighs."
+                ),
+                "body": (
+                    "I open your shirt and put my mouth on your neck. "
+                    "My hand is on your chest, on your breasts. Don't pull away."
+                ),
+                "next": ["kiss down my chest", "hand between my thighs", "pull me closer"],
             }
         if "story director" in system.lower() or "scene director" in system.lower():
             if "janitor" in system.lower() or "benglish" in system.lower():
