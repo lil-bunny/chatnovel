@@ -1,0 +1,19 @@
+.env
+.env.example
+**/.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+.pytest_cache/
+node_modules/
+frontend/dist/
+frontend/node_modules/
+backend/chatnovel.db
+backend/.venv/
+_business_plan_extract.txt
+.DS_Store
+.cursor/
+/Pather Panchali Theme Music.mp3
