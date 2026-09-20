@@ -22,6 +22,20 @@ ERAS = [
     {"id": "sarat_era", "label": "পুরনো সামাজিক রোমান্স"},
 ]
 
+HEATS = [
+    {"id": "restrained", "label": "সংযত"},
+    {"id": "erotic", "label": "কামুক · ১৮+"},
+]
+
+HEAT_SPEC = {
+    "restrained": "Restrained romance. Longing and implication. No graphic sex.",
+    "erotic": (
+        "Literary adult erotic between Deb (26) and Visha (24) only. "
+        "Desire, touch, breath, undressing, sex in era-true Bengali. "
+        "Consensual adults. Never anyone under 18. No pornography-as-list, no minors."
+    ),
+}
+
 TROPE_BEATS = {
     "slow_burn": "Unspoken attachment. Neither confesses. Family pressure gathers. Quiet choice at the end.",
     "enemies_to_lovers": "They begin in friction and pride. Insults hide interest. A shared crisis forces honesty. Attraction arrives late and costs them.",
@@ -44,8 +58,8 @@ ERAS_SPEC = {
         "channel": "chat",
         "setting": "Present-day Kolkata. Apartments, buses, tea stalls, late phones.",
         "blurb": "আজকের কলকাতা। Deb আর Visha-এর চ্যাট।",
-        "forbidden": "do not use period-only props as if they replace phones; no graphic sex",
-        "allowed": "phone, chat, bus, cafe, Southern Avenue, flat, office, family WhatsApp group mentioned as pressure not as UI",
+        "forbidden": "do not use period-only props as if they replace phones",
+        "allowed": "phone, chat, bus, cafe, Southern Avenue, flat, office, family pressure",
         "delivery": "short phone messages in the chat UI",
         "action_locations": "cafes, buses, rooftops, flats, office corridors, tea stalls",
         "literary": "accessible contemporary Bengali; not 2020s meme slang wall; original",
@@ -64,12 +78,23 @@ ERAS_SPEC = {
 
 
 def presets() -> dict:
-    return {"tropes": TROPES, "eras": ERAS, "defaults": {"trope": "slow_burn", "era": "calcutta_1850"}}
+    return {
+        "tropes": TROPES,
+        "eras": ERAS,
+        "heats": HEATS,
+        "defaults": {"trope": "slow_burn", "era": "calcutta_1850", "heat": "restrained"},
+    }
 
 
-def era_rules(era: str) -> dict:
+def era_rules(era: str, heat: str = "restrained") -> dict:
     spec = ERAS_SPEC.get(era) or ERAS_SPEC["calcutta_1850"]
-    return {"era": era if era in ERAS_SPEC else "calcutta_1850", **spec}
+    h = heat if heat in HEAT_SPEC else "restrained"
+    return {
+        "era": era if era in ERAS_SPEC else "calcutta_1850",
+        "heat": h,
+        "heat_direction": HEAT_SPEC[h],
+        **spec,
+    }
 
 
 def _lock_leads(bible: dict, spec: dict) -> dict:
@@ -135,7 +160,7 @@ def _norm_chapter(raw: dict, i: int) -> dict:
     }
 
 
-def _from_seed(spec: dict, trope: str, era: str) -> dict[str, Any]:
+def _from_seed(spec: dict, trope: str, era: str, heat: str = "restrained") -> dict[str, Any]:
     chapters = [_norm_chapter(c, c["n"]) for c in CHAPTERS]
     return {
         "title": "যা বলা হয়নি",
@@ -145,14 +170,15 @@ def _from_seed(spec: dict, trope: str, era: str) -> dict[str, Any]:
         "bible": _lock_leads(dict(BIBLE), spec),
         "chapters": chapters,
         "channel": spec["channel"],
-        "era_rules": era_rules(era),
+        "era_rules": era_rules(era, heat),
         "trope": trope,
         "era": era,
+        "heat": heat,
         "llm": False,
     }
 
 
-def _pack(bible: dict, chapters: list[dict], spec: dict, trope: str, era: str, llm: bool) -> dict[str, Any]:
+def _pack(bible: dict, chapters: list[dict], spec: dict, trope: str, era: str, heat: str, llm: bool) -> dict[str, Any]:
     return {
         "title": "যা বলা হয়নি",
         "blurb": spec["blurb"],
@@ -161,32 +187,34 @@ def _pack(bible: dict, chapters: list[dict], spec: dict, trope: str, era: str, l
         "bible": bible,
         "chapters": chapters,
         "channel": spec["channel"],
-        "era_rules": era_rules(era),
+        "era_rules": era_rules(era, heat),
         "trope": trope,
         "era": era,
+        "heat": heat,
         "llm": llm,
         "characters": bible.get("characters") or [],
     }
 
 
-async def compose(trope: str, era: str, provider: LLMProvider | None = None) -> dict[str, Any]:
-    if trope not in TROPE_BEATS or era not in ERAS_SPEC:
+async def compose(trope: str, era: str, heat: str = "restrained", provider: LLMProvider | None = None) -> dict[str, Any]:
+    if trope not in TROPE_BEATS or era not in ERAS_SPEC or heat not in HEAT_SPEC:
         raise ValueError("unknown preset")
     spec = ERAS_SPEC[era]
     if provider is None and not settings.api_key:
-        return _from_seed(spec, trope, era)
+        return _from_seed(spec, trope, era, heat)
     p = provider or get_provider()
     user_bible = (
         f"Leads MUST be Deb (26, he/him) and Visha (24, she/her). Adults 18+ only.\n"
         f"Trope: {trope} — {TROPE_BEATS[trope]}\n"
         f"Setting: {spec['setting']}\nChannel: {spec['channel']}\n"
+        f"Heat: {heat} — {HEAT_SPEC[heat]}\n"
         f"Literary direction: {spec['literary']}\n"
         f"Do not copy or closely mimic any existing author, including Sarat Chandra.\n"
         "Invent original backstory, secrets, social pressure. Return the story bible JSON."
     )
     bible = _lock_leads(await p.complete_json(prompts.STORY_BIBLE, user_bible) or {}, spec)
     user_plan = (
-        f"Story bible: {bible}\n"
+        f"Story bible: {bible}\nHeat: {heat} — {HEAT_SPEC[heat]}\n"
         "Write exactly 10 chapters for Deb and Visha.\n"
         "Arc: encounter, pressure, almost-meeting, rupture, reconnection, "
         "chapter 9 climax/choice, chapter 10 quiet ending.\n"
@@ -196,10 +224,10 @@ async def compose(trope: str, era: str, provider: LLMProvider | None = None) -> 
     planned = (await p.complete_json(prompts.CHAPTER_PLANNER, user_plan) or {}).get("chapters") or []
     chapters = [_norm_chapter(c, i + 1) for i, c in enumerate(planned[:10])]
     if len(chapters) < 10:
-        seed = _from_seed(spec, trope, era)["chapters"]
+        seed = _from_seed(spec, trope, era, heat)["chapters"]
         chapters.extend(seed[len(chapters) :])
         chapters = chapters[:10]
     for i, ch in enumerate(chapters, start=1):
         ch["n"] = i
         ch["messages"] = []
-    return _pack(bible, chapters, spec, trope, era, llm=True)
+    return _pack(bible, chapters, spec, trope, era, heat, llm=True)

@@ -130,17 +130,20 @@
       position: absolute; inset: 0; background:
         radial-gradient(500px 280px at 50% 20%, #fff6dc 0%, transparent 70%),
         var(--panel);
-      display: grid; place-items: center; padding: 1.2rem 1.1rem; text-align: center; z-index: 2;
+      display: grid; place-items: start center; padding: 1.2rem 1.1rem 2rem; text-align: center; z-index: 30;
       overflow: auto;
+      pointer-events: auto;
     }
+    .cover-inner { width: 100%; max-width: 380px; position: relative; z-index: 31; pointer-events: auto; }
     .cover.hidden { display: none; }
     .cover h1 { font-family: "Noto Serif Bengali", serif; font-size: 1.85rem; margin: .2rem 0; color: #6b2a1c; letter-spacing: .02em; }
     .cover p { color: var(--mute); line-height: 1.55; }
     .hint { font-size: .8rem; color: var(--mute); }
-    .picks { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin: .35rem 0 .55rem; }
+    .picks { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin: .35rem 0 .6rem; pointer-events: auto; position: relative; z-index: 32; }
     .chip {
       border: 1px solid var(--line); background: #efe0b8; color: var(--text);
-      border-radius: 999px; padding: .28rem .7rem; font: inherit; cursor: pointer;
+      border-radius: 999px; padding: .4rem .85rem; font: inherit; cursor: pointer;
+      pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
     .chip.on { background: var(--gold); color: #f3e6c8; }
     .slate {
@@ -155,11 +158,13 @@
 <body>
   <div class="phone">
     <div class="cover" id="cover">
-      <div>
+      <div class="cover-inner">
         <p class="hint">গল্পের ধরন</p>
         <div class="picks" id="tropes"></div>
         <p class="hint">কাল</p>
         <div class="picks" id="eras"></div>
+        <p class="hint">তাপ</p>
+        <div class="picks" id="heats"></div>
         <h1 id="cover-title">যা বলা হয়নি</h1>
         <p id="cover-blurb">১৮৫০, কলকাতা। Deb আর Visha-এর গোপন চিঠি।</p>
         <p id="plot-status" class="hint"></p>
@@ -236,8 +241,25 @@ function startTheme() {
 applyMute();
 
 let STORY = null;
-let PRESETS = { tropes: [], eras: [], defaults: { trope: "slow_burn", era: "calcutta_1850" } };
-let pick = { trope: "slow_burn", era: "calcutta_1850" };
+let PRESETS = {
+  tropes: [
+    { id: "slow_burn", label: "যা বলা হয়নি" },
+    { id: "enemies_to_lovers", label: "শত্রু থেকে প্রেম" },
+    { id: "arranged", label: "ঘরের বিয়ে" },
+    { id: "second_chance", label: "দ্বিতীয় সুযোগ" },
+  ],
+  eras: [
+    { id: "calcutta_1850", label: "গোপন চিঠি, ১৮৫০" },
+    { id: "modern", label: "আজকের কলকাতা" },
+    { id: "sarat_era", label: "পুরনো সামাজিক রোমান্স" },
+  ],
+  heats: [
+    { id: "restrained", label: "সংযত" },
+    { id: "erotic", label: "কামুক · ১৮+" },
+  ],
+  defaults: { trope: "slow_burn", era: "calcutta_1850", heat: "restrained" },
+};
+let pick = { trope: "slow_burn", era: "calcutta_1850", heat: "restrained" };
 let state = load();
 let paused = false;
 let skipTick = false;
@@ -573,10 +595,16 @@ fetch("/v1/story")
 fetch("/v1/presets")
   .then((r) => r.json())
   .then((data) => {
-    PRESETS = data;
+    PRESETS = {
+      tropes: data.tropes || PRESETS.tropes,
+      eras: data.eras || PRESETS.eras,
+      heats: data.heats || PRESETS.heats,
+      defaults: data.defaults || PRESETS.defaults,
+    };
     const saved = loadPlot();
     pick.trope = saved?.trope || data.defaults?.trope || "slow_burn";
     pick.era = saved?.era || data.defaults?.era || "calcutta_1850";
+    pick.heat = saved?.heat || data.defaults?.heat || "restrained";
     renderPicks();
   });
 
@@ -594,27 +622,34 @@ function applyPlot(plot) {
   if (plot.blurb) $("cover-blurb").textContent = plot.blurb;
 }
 function renderPicks() {
-  const boxT = $("tropes");
-  const boxE = $("eras");
-  boxT.innerHTML = "";
-  boxE.innerHTML = "";
-  for (const t of PRESETS.tropes || []) {
+  paintPicks("tropes", PRESETS.tropes, "trope");
+  paintPicks("eras", PRESETS.eras, "era");
+  paintPicks("heats", PRESETS.heats, "heat");
+}
+function paintPicks(id, items, key) {
+  const box = $(id);
+  if (!box) return;
+  box.innerHTML = "";
+  for (const item of items || []) {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "chip" + (pick.trope === t.id ? " on" : "");
-    b.textContent = t.label;
-    b.onclick = () => { pick.trope = t.id; renderPicks(); };
-    boxT.appendChild(b);
-  }
-  for (const e of PRESETS.eras || []) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "chip" + (pick.era === e.id ? " on" : "");
-    b.textContent = e.label;
-    b.onclick = () => { pick.era = e.id; renderPicks(); };
-    boxE.appendChild(b);
+    b.className = "chip" + (pick[key] === item.id ? " on" : "");
+    b.dataset[key] = item.id;
+    b.textContent = item.label;
+    box.appendChild(b);
   }
 }
+$("cover").addEventListener("click", (ev) => {
+  const chip = ev.target.closest(".chip");
+  if (!chip) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  if (chip.dataset.trope) pick.trope = chip.dataset.trope;
+  if (chip.dataset.era) pick.era = chip.dataset.era;
+  if (chip.dataset.heat) pick.heat = chip.dataset.heat;
+  renderPicks();
+});
+renderPicks();
 async function buildPlot() {
   const status = $("plot-status");
   const btn = $("build-btn");
@@ -630,6 +665,7 @@ async function buildPlot() {
     const plot = await r.json();
     plot.trope = pick.trope;
     plot.era = pick.era;
+    plot.heat = pick.heat;
     localStorage.setItem(PLOT_KEY, JSON.stringify(plot));
     applyPlot(plot);
     const keep = state.photos;

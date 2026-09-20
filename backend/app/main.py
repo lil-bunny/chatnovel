@@ -29,6 +29,7 @@ class GenerateIn(BaseModel):
 class PlotIn(BaseModel):
     trope: str = "slow_burn"
     era: str = "calcutta_1850"
+    heat: str = "restrained"
 
 
 @app.get("/health")
@@ -44,7 +45,7 @@ def list_presets():
 @app.post("/v1/plot")
 async def plot(body: PlotIn):
     try:
-        return await compose(body.trope, body.era)
+        return await compose(body.trope, body.era, body.heat)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

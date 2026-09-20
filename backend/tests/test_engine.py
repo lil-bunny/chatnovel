@@ -30,6 +30,7 @@ def test_presets_list():
     eras = {e["id"] for e in data["eras"]}
     assert {"slow_burn", "enemies_to_lovers", "arranged", "second_chance"} <= ids
     assert {"calcutta_1850", "modern", "sarat_era"} <= eras
+    assert {h["id"] for h in data["heats"]} >= {"restrained", "erotic"}
 
 
 def test_plot_unknown_is_400():
@@ -40,12 +41,13 @@ def test_plot_unknown_is_400():
 def test_compose_locks_deb_visha():
     import asyncio
 
-    pack = asyncio.run(compose("enemies_to_lovers", "modern", provider=MockProvider()))
+    pack = asyncio.run(compose("enemies_to_lovers", "modern", "erotic", provider=MockProvider()))
     names = [c["name"] for c in pack["bible"]["characters"]]
     assert names == ["Deb", "Visha"]
     assert min(c["age"] for c in pack["bible"]["characters"]) >= 18
     assert len(pack["chapters"]) == 10
     assert pack["era_rules"]["channel"] == "chat"
+    assert pack["era_rules"]["heat"] == "erotic"
 
 
 def test_canned_chapter_one_is_period():
@@ -86,5 +88,6 @@ def test_home_is_html():
     assert "Deb লিখছে" in r.text
     assert "Deb · Visha" in r.text
     assert "গল্প গড়ুন" in r.text
+    assert "কামুক" in r.text
     assert "/static/theme.mp3" in r.text
     assert "নিরব" in r.text

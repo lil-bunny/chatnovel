@@ -180,7 +180,7 @@ async def _directed(
         messages = _clean(data.get("messages") if isinstance(data, dict) else None)
         complete = bool((data or {}).get("chapter_complete"))
         try:
-            post_check([m["body"] for m in messages])
+            post_check([m["body"] for m in messages], heat=str(rules.get("heat") or "restrained"))
         except SafetyError as e:
             repair = str(e)
             continue
