@@ -41,7 +41,7 @@ def heuristic_review(messages: list[dict], bible: dict, characters: list) -> dic
     if not messages:
         issues.append("No messages generated")
     for m in messages:
-        if (m.get("kind") or "text") != "text":
+        if (m.get("kind") or "text") not in ("text",):
             continue
         speaker = (m.get("speaker") or "").lower()
         if speaker and speaker not in names:

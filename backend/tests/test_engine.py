@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.generate import next_batch
 from app.llm import MockProvider
 from app.main import app
+from app.plot import compose
 from app.seed_story import CHAPTERS
 
 client = TestClient(app)
@@ -23,6 +24,30 @@ def test_story_has_adult_leads_and_chapters():
     assert "১৮৫০" in data["blurb"]
 
 
+def test_presets_list():
+    data = client.get("/v1/presets").json()
+    ids = {t["id"] for t in data["tropes"]}
+    eras = {e["id"] for e in data["eras"]}
+    assert {"slow_burn", "enemies_to_lovers", "arranged", "second_chance"} <= ids
+    assert {"calcutta_1850", "modern", "sarat_era"} <= eras
+
+
+def test_plot_unknown_is_400():
+    r = client.post("/v1/plot", json={"trope": "nope", "era": "nope"})
+    assert r.status_code == 400
+
+
+def test_compose_locks_deb_visha():
+    import asyncio
+
+    pack = asyncio.run(compose("enemies_to_lovers", "modern", provider=MockProvider()))
+    names = [c["name"] for c in pack["bible"]["characters"]]
+    assert names == ["Deb", "Visha"]
+    assert min(c["age"] for c in pack["bible"]["characters"]) >= 18
+    assert len(pack["chapters"]) == 10
+    assert pack["era_rules"]["channel"] == "chat"
+
+
 def test_canned_chapter_one_is_period():
     ch = CHAPTERS[0]
     speakers = {m.get("speaker") for m in ch["messages"] if m.get("kind") != "scene_marker"}
@@ -38,9 +63,20 @@ def test_directed_pipeline_speakers():
     data = asyncio.run(next_batch(0, [], 0, provider=MockProvider()))
     assert data["llm"] is True
     assert data["messages"]
-    speakers = {m.get("speaker") for m in data["messages"] if m.get("kind") != "scene_marker"}
+    assert any(m.get("kind") == "action" for m in data["messages"])
+    assert "দৃশ্য" in (data["messages"][0].get("slugline") or data["messages"][0]["body"])
+    speakers = {m.get("speaker") for m in data["messages"] if m.get("kind") not in {"scene_marker", "action"}}
     assert speakers <= {"Deb", "Visha"}
     assert isinstance(data["tension"], int)
+
+
+def test_generate_modern_pack_speakers():
+    import asyncio
+
+    pack = asyncio.run(compose("slow_burn", "modern", provider=MockProvider()))
+    data = asyncio.run(next_batch(0, [], 0, pack=pack, provider=MockProvider()))
+    speakers = {m.get("speaker") for m in data["messages"] if m.get("kind") not in {"scene_marker", "action"}}
+    assert speakers <= {"Deb", "Visha"}
 
 
 def test_home_is_html():
@@ -49,6 +85,6 @@ def test_home_is_html():
     assert "text/html" in r.headers["content-type"]
     assert "Deb লিখছে" in r.text
     assert "Deb · Visha" in r.text
-    assert "১৮৫০" in r.text
+    assert "গল্প গড়ুন" in r.text
     assert "/static/theme.mp3" in r.text
     assert "নিরব" in r.text

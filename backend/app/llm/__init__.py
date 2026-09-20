@@ -43,6 +43,9 @@ class MockProvider:
                 {
                     "scene_goal": "A quiet late-night exchange that reveals one withheld fact.",
                     "next_event": "One character almost says what they mean, then retreats.",
+                    "slugline": "দৃশ্য · উঠোন · সন্ধ্যা",
+                    "blocking": "Visha behind the household screen; Deb in the courtyard.",
+                    "action": "Rain hits the tiles. A folded note is passed.",
                     "emotional_shift": {"relationship_tension": 2},
                     "reveal": False,
                     "cliffhanger": False,
@@ -63,7 +66,18 @@ class MockProvider:
             }
         if "fiction editor" in system.lower() or "critic" in system.lower():
             return {"pass": True, "issues": [], "repair_instruction": ""}
-        if "dialogue" in system.lower() or "bengali" in system.lower():
+        if "story bible" in system.lower() or "canonical story bible" in system.lower():
+            return self.canned.get("bible") or {
+                "premise": "Deb and Visha under family pressure.",
+                "setting": "Calcutta",
+                "characters": [
+                    {"name": "Deb", "age": 26, "backstory": "Clerk."},
+                    {"name": "Visha", "age": 24, "backstory": "Reads in secret."},
+                ],
+            }
+        if "chapter planner" in system.lower() or "10-chapter outline" in system.lower():
+            return self.canned.get("planner", {"chapters": []})
+        if "dialogue" in system.lower() or "write original bengali for fictional" in system.lower():
             return {
                 "messages": [
                     {"speaker": "Deb", "body": "প্রদীপ জ্বলে আছে?", "kind": "text"},
@@ -72,10 +86,6 @@ class MockProvider:
                 ],
                 "chapter_complete": False,
             }
-        if "chapter planner" in system.lower() or "chapter" in system.lower():
-            return self.canned.get("planner", {"chapters": []})
-        if "story bible" in system.lower() or "character profiles" in system.lower():
-            return self.canned.get("bible", {})
         return {}
 
 

@@ -130,22 +130,41 @@
       position: absolute; inset: 0; background:
         radial-gradient(500px 280px at 50% 20%, #fff6dc 0%, transparent 70%),
         var(--panel);
-      display: grid; place-items: center; padding: 2rem 1.4rem; text-align: center; z-index: 2;
+      display: grid; place-items: center; padding: 1.2rem 1.1rem; text-align: center; z-index: 2;
+      overflow: auto;
     }
     .cover.hidden { display: none; }
-    .cover h1 { font-family: "Noto Serif Bengali", serif; font-size: 2.15rem; margin: .3rem 0; color: #6b2a1c; letter-spacing: .02em; }
-    .cover p { color: var(--mute); line-height: 1.65; }
+    .cover h1 { font-family: "Noto Serif Bengali", serif; font-size: 1.85rem; margin: .2rem 0; color: #6b2a1c; letter-spacing: .02em; }
+    .cover p { color: var(--mute); line-height: 1.55; }
     .hint { font-size: .8rem; color: var(--mute); }
+    .picks { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin: .35rem 0 .55rem; }
+    .chip {
+      border: 1px solid var(--line); background: #efe0b8; color: var(--text);
+      border-radius: 999px; padding: .28rem .7rem; font: inherit; cursor: pointer;
+    }
+    .chip.on { background: var(--gold); color: #f3e6c8; }
+    .slate {
+      align-self: center; max-width: 92%; text-align: center;
+      border: 1px solid #8a3a28; background: #3a2416; color: #f3e6c8;
+      padding: .55rem .85rem; border-radius: 4px; margin: .4rem 0;
+    }
+    .slate strong { display: block; font-size: .82rem; letter-spacing: .06em; }
+    .slate span { display: block; font-size: .72rem; color: #e6d3a8; margin-top: .28rem; line-height: 1.45; }
   </style>
 </head>
 <body>
   <div class="phone">
     <div class="cover" id="cover">
       <div>
-        <p class="hint">গোপন চিঠি · ১৮৫০ কলকাতা</p>
+        <p class="hint">গল্পের ধরন</p>
+        <div class="picks" id="tropes"></div>
+        <p class="hint">কাল</p>
+        <div class="picks" id="eras"></div>
         <h1 id="cover-title">যা বলা হয়নি</h1>
         <p id="cover-blurb">১৮৫০, কলকাতা। Deb আর Visha-এর গোপন চিঠি।</p>
+        <p id="plot-status" class="hint"></p>
         <p id="resume-hint" class="hint"></p>
+        <p><button type="button" id="build-btn">গল্প গড়ুন</button></p>
         <p><button type="button" id="start-btn">চিঠি খুলুন</button></p>
         <p><button type="button" class="ghost" id="reset-btn">শুরু থেকে</button></p>
       </div>
@@ -187,6 +206,7 @@
 
 <script>
 const KEY = "chatnovel.progress";
+const PLOT_KEY = "chatnovel.plot";
 const FIRST = "Deb";
 const SECOND = "Visha";
 const $ = (id) => document.getElementById(id);
@@ -216,6 +236,8 @@ function startTheme() {
 applyMute();
 
 let STORY = null;
+let PRESETS = { tropes: [], eras: [], defaults: { trope: "slow_burn", era: "calcutta_1850" } };
+let pick = { trope: "slow_burn", era: "calcutta_1850" };
 let state = load();
 let paused = false;
 let skipTick = false;
@@ -287,6 +309,21 @@ function addMarker(text) {
   p.textContent = text;
   thread.appendChild(p);
 }
+function addSlate(msg) {
+  const d = document.createElement("div");
+  d.className = "slate";
+  const k = document.createElement("strong");
+  k.textContent = msg.slugline || (msg.body || "").split("\n")[0] || "দৃশ্য";
+  d.appendChild(k);
+  const rest = [msg.blocking, msg.action].filter(Boolean).join(" — ")
+    || (msg.body || "").split("\n").slice(1).join(" ");
+  if (rest) {
+    const s = document.createElement("span");
+    s.textContent = rest;
+    d.appendChild(s);
+  }
+  thread.appendChild(d);
+}
 function addBubble(msg, body, withCaret) {
   const who = isFirst(msg) ? FIRST : SECOND;
   const row = document.createElement("div");
@@ -320,7 +357,8 @@ function restoreSeen() {
   for (let i = 0; i < state.index; i++) {
     const m = list[i];
     if (!m) continue;
-    if (m.kind === "scene_marker") addMarker(m.body);
+    if (m.kind === "action") addSlate(m);
+    else if (m.kind === "scene_marker") addMarker(m.body);
     else addBubble(m, m.body, false);
   }
   scrollBottom();
@@ -376,6 +414,13 @@ async function typeIntoBubble(msg) {
 async function playOne(msg) {
   draft.textContent = "";
   sendBtn.classList.remove("hot");
+  if (msg.kind === "action") {
+    statusEl.textContent = "";
+    addSlate(msg);
+    scrollBottom();
+    await sleep(500 + Math.random() * 280);
+    return;
+  }
   if (msg.kind === "scene_marker") {
     statusEl.textContent = "";
     addMarker(msg.body);
@@ -403,7 +448,7 @@ async function playOne(msg) {
 
 async function fetchMore() {
   const list = msgs();
-  const recent = list.filter((m) => m.kind !== "scene_marker").slice(-16);
+  const recent = list.filter((m) => m.kind !== "scene_marker" && m.kind !== "action").slice(-16);
   const r = await fetch("/v1/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -412,6 +457,9 @@ async function fetchMore() {
       already: list.length,
       recent,
       tension: state.tension || 0,
+      bible: STORY.bible,
+      chapters: STORY.chapters,
+      era_rules: STORY.era_rules,
     }),
   });
   const data = await r.json();
@@ -475,9 +523,13 @@ $("reset-btn").onclick = () => {
   const keep = state.photos;
   state = { chapter: 0, index: 0, log: {}, photos: keep, tension: 0 };
   save();
+  localStorage.removeItem(PLOT_KEY);
   $("resume-hint").textContent = "";
-  startChat();
+  $("plot-status").textContent = "নতুন গল্প গড়ুন।";
+  $("start-btn").textContent = "চিঠি খুলুন";
+  $("cover").classList.remove("hidden");
 };
+$("build-btn").onclick = buildPlot;
 $("next-btn").onclick = () => {
   if (state.chapter < STORY.chapters.length - 1) {
     state.chapter += 1;
@@ -507,8 +559,7 @@ fetch("/v1/story")
   .then((data) => {
     STORY = data;
     applyPhotos();
-    $("cover-title").textContent = data.title;
-    $("cover-blurb").textContent = data.blurb;
+    applyPlot(loadPlot() || data);
     if (state.chapter || state.index) {
       $("resume-hint").textContent = `থামানো ছিল অধ্যায় ${chapter().n}-এ।`;
       $("start-btn").textContent = "পড়ে চলুন";
@@ -518,6 +569,80 @@ fetch("/v1/story")
     $("cover-blurb").textContent = "গল্প লোড হয়নি। সার্ভার চালু আছে তো?";
     $("start-btn").disabled = true;
   });
+
+fetch("/v1/presets")
+  .then((r) => r.json())
+  .then((data) => {
+    PRESETS = data;
+    const saved = loadPlot();
+    pick.trope = saved?.trope || data.defaults?.trope || "slow_burn";
+    pick.era = saved?.era || data.defaults?.era || "calcutta_1850";
+    renderPicks();
+  });
+
+function loadPlot() {
+  try {
+    return JSON.parse(localStorage.getItem(PLOT_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+function applyPlot(plot) {
+  if (!plot) return;
+  STORY = { ...STORY, ...plot };
+  if (plot.title) $("cover-title").textContent = plot.title;
+  if (plot.blurb) $("cover-blurb").textContent = plot.blurb;
+}
+function renderPicks() {
+  const boxT = $("tropes");
+  const boxE = $("eras");
+  boxT.innerHTML = "";
+  boxE.innerHTML = "";
+  for (const t of PRESETS.tropes || []) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (pick.trope === t.id ? " on" : "");
+    b.textContent = t.label;
+    b.onclick = () => { pick.trope = t.id; renderPicks(); };
+    boxT.appendChild(b);
+  }
+  for (const e of PRESETS.eras || []) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (pick.era === e.id ? " on" : "");
+    b.textContent = e.label;
+    b.onclick = () => { pick.era = e.id; renderPicks(); };
+    boxE.appendChild(b);
+  }
+}
+async function buildPlot() {
+  const status = $("plot-status");
+  const btn = $("build-btn");
+  btn.disabled = true;
+  status.textContent = "গল্প গড়া হচ্ছে…";
+  try {
+    const r = await fetch("/v1/plot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pick),
+    });
+    if (!r.ok) throw new Error("plot");
+    const plot = await r.json();
+    plot.trope = pick.trope;
+    plot.era = pick.era;
+    localStorage.setItem(PLOT_KEY, JSON.stringify(plot));
+    applyPlot(plot);
+    const keep = state.photos;
+    state = { chapter: 0, index: 0, log: {}, photos: keep, tension: 0 };
+    save();
+    $("resume-hint").textContent = "";
+    $("start-btn").textContent = "চিঠি খুলুন";
+    status.textContent = "গল্প তৈরি। চিঠি খুলুন।";
+  } catch {
+    status.textContent = "গল্প গড়া যায়নি। আবার চেষ্টা করুন।";
+  }
+  btn.disabled = false;
+}
 </script>
 </body>
 </html>

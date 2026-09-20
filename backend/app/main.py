@@ -1,12 +1,13 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.generate import next_batch
+from app.plot import compose, presets
 from app.seed_story import BIBLE, CHAPTERS
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -20,11 +21,32 @@ class GenerateIn(BaseModel):
     already: int = 0
     recent: list[dict] = Field(default_factory=list)
     tension: int = 0
+    bible: dict | None = None
+    chapters: list[dict] | None = None
+    era_rules: dict | None = None
+
+
+class PlotIn(BaseModel):
+    trope: str = "slow_burn"
+    era: str = "calcutta_1850"
 
 
 @app.get("/health")
 def health():
     return {"ok": True, "product": "chatnovel", "llm": bool(settings.api_key)}
+
+
+@app.get("/v1/presets")
+def list_presets():
+    return presets()
+
+
+@app.post("/v1/plot")
+async def plot(body: PlotIn):
+    try:
+        return await compose(body.trope, body.era)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.get("/v1/story")
@@ -35,6 +57,7 @@ def story():
         "first_person": "Deb",
         "second_person": "Visha",
         "llm": bool(settings.api_key),
+        "bible": BIBLE,
         "characters": BIBLE["characters"],
         "chapters": [
             {
@@ -46,13 +69,25 @@ def story():
             }
             for c in CHAPTERS
         ],
+        "era_rules": {
+            "era": "calcutta_1850",
+            "channel": "notes",
+        },
     }
 
 
 @app.post("/v1/generate")
 async def generate(body: GenerateIn):
-    idx = max(0, min(body.chapter, len(CHAPTERS) - 1))
-    return await next_batch(idx, body.recent, body.already, body.tension)
+    pack = {}
+    if body.bible:
+        pack["bible"] = body.bible
+    if body.chapters:
+        pack["chapters"] = body.chapters
+    if body.era_rules:
+        pack["era_rules"] = body.era_rules
+    n = len(pack.get("chapters") or CHAPTERS)
+    idx = max(0, min(body.chapter, n - 1))
+    return await next_batch(idx, body.recent, body.already, body.tension, pack or None)
 
 
 @app.get("/")
