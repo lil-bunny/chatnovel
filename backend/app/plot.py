@@ -24,15 +24,15 @@ ERAS = [
 
 HEATS = [
     {"id": "restrained", "label": "সংযত"},
-    {"id": "erotic", "label": "কামুক · ১৮+"},
+    {"id": "erotic", "label": "কামুক"},
 ]
 
 HEAT_SPEC = {
     "restrained": "Restrained romance. Longing and implication. No graphic sex.",
     "erotic": (
-        "Literary adult erotic between Deb (26) and Visha (24) only. "
-        "Desire, touch, breath, undressing, sex in era-true Bengali. "
-        "Consensual adults. Never anyone under 18. No pornography-as-list, no minors."
+        "Full erotica between Deb (26) and Visha (24). Must write: hands on cloth, "
+        "opening dress/sari/blouse/shirt (era-true), skin, mouths, exploring the body, intercourse. "
+        "Action beat is 4–8 Bengali sentences. Do not fade to black. Do not imply and cut away."
     ),
 }
 
@@ -219,6 +219,8 @@ async def compose(trope: str, era: str, heat: str = "restrained", provider: LLMP
         "Arc: encounter, pressure, almost-meeting, rupture, reconnection, "
         "chapter 9 climax/choice, chapter 10 quiet ending.\n"
         "Each chapter needs key_scenes (1-2 locations), Bengali closing_line, escalation_target 20-95.\n"
+        "If heat is erotic, at least two chapters need private-room key_scenes "
+        "(inner room, bedroom, locked door) where they can undress.\n"
         "Allow setbacks. Original titles. Do not write dialogue."
     )
     planned = (await p.complete_json(prompts.CHAPTER_PLANNER, user_plan) or {}).get("chapters") or []

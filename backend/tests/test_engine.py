@@ -31,6 +31,8 @@ def test_presets_list():
     assert {"slow_burn", "enemies_to_lovers", "arranged", "second_chance"} <= ids
     assert {"calcutta_1850", "modern", "sarat_era"} <= eras
     assert {h["id"] for h in data["heats"]} >= {"restrained", "erotic"}
+    assert any(h["id"] == "erotic" and h["label"] == "কামুক" for h in data["heats"])
+    assert not any("১৮+" in (h.get("label") or "") for h in data["heats"])
 
 
 def test_plot_unknown_is_400():
@@ -48,6 +50,8 @@ def test_compose_locks_deb_visha():
     assert len(pack["chapters"]) == 10
     assert pack["era_rules"]["channel"] == "chat"
     assert pack["era_rules"]["heat"] == "erotic"
+    assert "intercourse" in pack["era_rules"]["heat_direction"]
+    assert "opening dress" in pack["era_rules"]["heat_direction"]
 
 
 def test_canned_chapter_one_is_period():
@@ -95,8 +99,40 @@ def test_home_is_html():
     assert "Deb · Visha" in r.text
     assert "গল্প গড়ুন" in r.text
     assert "কামুক" in r.text
+    assert "কামুক · ১৮+" not in r.text
+    assert "white-space: pre-wrap" in r.text
     assert ".chip.on" in r.text
     assert "button:not(.ghost):not(.chip)" in r.text
     assert "aria-pressed" in r.text
     assert "/static/theme.mp3" in r.text
     assert "নিরব" in r.text
+
+
+def test_erotic_prompts_require_body_and_never_fail_sex():
+    from app.llm import prompts
+
+    assert "opening dress" in prompts.SCENE_DIRECTOR or "opening cloth" in prompts.SCENE_DIRECTOR
+    assert "4–8 sentence" in prompts.SCENE_DIRECTOR or "4-8 sentence" in prompts.SCENE_DIRECTOR
+    assert "intercourse" in prompts.DIALOGUE
+    assert "Never fail graphic adult sex" in prompts.CRITIC
+    assert "fail fade-to-black" in prompts.CRITIC
+    assert "Do not treat explicitness as an issue" in prompts.CRITIC
+    assert "private-room" in prompts.CHAPTER_PLANNER
+
+
+def test_erotic_generate_opens_cloth():
+    import asyncio
+
+    pack = asyncio.run(compose("slow_burn", "calcutta_1850", "erotic", provider=MockProvider()))
+    data = asyncio.run(next_batch(0, [], 0, pack=pack, provider=MockProvider()))
+    action = next(m for m in data["messages"] if m.get("kind") == "action")
+    blob = " ".join(filter(None, [action.get("action"), action.get("blocking"), action.get("body")]))
+    assert "blouse" in blob.lower() or "cloth" in blob.lower()
+    assert "sex" in blob.lower()
+
+
+def test_erotic_post_check_allows_graphic():
+    from app.services.story_engine.safety import post_check
+
+    post_check(["explicit sex between Deb and Visha"], heat="erotic")
+

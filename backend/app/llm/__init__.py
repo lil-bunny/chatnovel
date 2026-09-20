@@ -38,6 +38,25 @@ class MockProvider:
 
     async def complete_json(self, system: str, user: str, cheap: bool = False) -> dict[str, Any]:
         if "story director" in system.lower() or "scene director" in system.lower():
+            if "erotic" in user.lower():
+                return self.canned.get(
+                    "director",
+                    {
+                        "scene_goal": "Private-room intimacy between Deb and Visha.",
+                        "next_event": "Cloth opens; they do not stop.",
+                        "slugline": "দৃশ্য · ভিতর ঘর · রাত",
+                        "blocking": "Deb's hands at Visha's blouse; her sari unpinned at the waist.",
+                        "action": (
+                            "His fingers open the blouse. Cloth falls from her shoulder. "
+                            "He maps skin with his mouth. She pulls his shirt off. "
+                            "They explore each other's bodies and have sex on the mat."
+                        ),
+                        "emotional_shift": {"longing": 6},
+                        "reveal": False,
+                        "cliffhanger": False,
+                        "tension_delta": 8,
+                    },
+                )
             return self.canned.get(
                 "director",
                 {

@@ -159,7 +159,10 @@
       padding: .55rem .85rem; border-radius: 4px; margin: .4rem 0;
     }
     .slate strong { display: block; font-size: .82rem; letter-spacing: .06em; }
-    .slate span { display: block; font-size: .72rem; color: #e6d3a8; margin-top: .28rem; line-height: 1.45; }
+    .slate span {
+      display: block; font-size: .72rem; color: #e6d3a8; margin-top: .28rem;
+      line-height: 1.45; white-space: pre-wrap; text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -262,7 +265,7 @@ let PRESETS = {
   ],
   heats: [
     { id: "restrained", label: "সংযত" },
-    { id: "erotic", label: "কামুক · ১৮+" },
+    { id: "erotic", label: "কামুক" },
   ],
   defaults: { trope: "slow_burn", era: "calcutta_1850", heat: "restrained" },
 };
@@ -344,8 +347,8 @@ function addSlate(msg) {
   const k = document.createElement("strong");
   k.textContent = msg.slugline || (msg.body || "").split("\n")[0] || "দৃশ্য";
   d.appendChild(k);
-  const rest = [msg.blocking, msg.action].filter(Boolean).join(" — ")
-    || (msg.body || "").split("\n").slice(1).join(" ");
+  const rest = [msg.blocking, msg.action].filter(Boolean).join("\n")
+    || (msg.body || "").split("\n").slice(1).join("\n");
   if (rest) {
     const s = document.createElement("span");
     s.textContent = rest;

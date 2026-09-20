@@ -30,10 +30,12 @@ def pre_check(characters: list, brief: str = "") -> None:
 
 def post_check(bodies: list[str], heat: str = "restrained") -> None:
     blob = "\n".join(bodies)
+    if any(x in blob for x in ("১৬ বছর", "১৭ বছর", "16 years", "17 years", "schoolgirl")):
+        raise SafetyError("Age-uncertain or underage content")
+    if heat == "erotic":
+        return
     rank = classify_intensity(blob)
     if rank == "blocked":
         raise SafetyError("Generated text failed safety")
-    if heat != "erotic" and rank == "graphic":
+    if rank == "graphic":
         raise SafetyError("Generated text failed safety")
-    if any(x in blob for x in ("১৬ বছর", "১৭ বছর", "16 years", "17 years", "schoolgirl")):
-        raise SafetyError("Age-uncertain or underage content")

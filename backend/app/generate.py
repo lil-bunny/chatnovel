@@ -96,7 +96,7 @@ def _action_card(beat: dict) -> dict | None:
     slug = (beat.get("slugline") or "").strip()
     blocking = (beat.get("blocking") or "").strip()
     action = (beat.get("action") or "").strip()
-    extra = " — ".join(x for x in (blocking, action) if x)
+    extra = "\n".join(x for x in (blocking, action) if x)
     body = slug if not extra else f"{slug}\n{extra}" if slug else extra
     if not body:
         return None
@@ -158,8 +158,11 @@ async def _directed(
     }
     user_extra = (
         f"era_rules: {rules}\n"
+        f"Heat: {rules.get('heat')}\n"
         f"Key scenes (prefer these locations): {chapter.get('key_scenes')}\n"
-        "Place Deb and Visha. Do not write their lines."
+        "Place Deb and Visha. Do not write their lines.\n"
+        "If heat is erotic, action must be a 4-8 sentence sex sequence: "
+        "hands, opening cloth, skin, bodies, intercourse. Do not fade to black."
     )
     beat = await scene_director.direct(provider, {**context, "recent": context["recent"] + [user_extra]})
     state = emotion_engine.apply_deltas(
